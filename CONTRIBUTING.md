@@ -3,11 +3,11 @@
 ## Development setup
 
 ```bash
-python -m venv .venv
-python -m pip install -e ".[dev]"
-pytest -q
-ruff check .
+sh scripts/dev.sh setup
+sh scripts/dev.sh check
 ```
+
+On Windows, use `.\dev.cmd setup` followed by `.\dev.cmd check`.
 
 ## Pull requests
 
