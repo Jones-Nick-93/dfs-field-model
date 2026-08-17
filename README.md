@@ -53,27 +53,23 @@ contest-selection, ownership-projection, lineup-selection, or staking process.
 
 Python 3.11 or newer is recommended.
 
-```bash
-python -m venv .venv
-```
-
 On Windows:
 
 ```powershell
-.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-pytest -q
-python demo_field.py
+.\dev.cmd setup
+.\dev.cmd doctor
+.\dev.cmd check
 ```
 
 On macOS or Linux:
 
 ```bash
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-pytest -q
-python demo_field.py
+sh scripts/dev.sh setup
+sh scripts/dev.sh doctor
+sh scripts/dev.sh check
 ```
+
+The full check runs diff hygiene, Ruff, pytest, and the deterministic demo. It also writes an ignored machine-readable receipt to `.artifacts/verification/latest.json` for local tooling and operational dashboards. Dependencies are resolved from the committed `uv.lock`.
 
 ## Analyze a contest export
 

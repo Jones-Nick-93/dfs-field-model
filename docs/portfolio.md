@@ -9,10 +9,11 @@ calibration checks, testable CLI design, packaging, and CI.
 ## Demo path
 
 ```bash
-python -m pip install -e ".[dev]"
-pytest -q
-python demo_field.py
+sh scripts/dev.sh setup
+sh scripts/dev.sh check
 ```
+
+On Windows, use `.\dev.cmd setup` and `.\dev.cmd check`. The full check runs 19 deterministic tests and produces an ignored verification receipt in addition to terminal evidence.
 
 The demo constructs a deterministic synthetic slate, generates two neutral
 field hypotheses, compares lineup concentration, and evaluates an

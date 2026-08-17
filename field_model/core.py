@@ -268,7 +268,8 @@ def optimize(
         lower.append(0.0)
         upper.append(float(cfg.max_per_team))
 
-    for lineup in banned or ():
+    ordered_banned = sorted(banned or (), key=lambda lineup: tuple(sorted(lineup)))
+    for lineup in ordered_banned:
         unknown = set(lineup) - set(id_to_row)
         if unknown:
             raise ValueError(
@@ -394,12 +395,12 @@ def near_optimal_lineups(
             continue
         expanded.add(lineup)
         picked_rows = {id_to_row[player_id] for player_id in lineup}
-        for outgoing in tuple(picked_rows):
-            for incoming in all_rows - picked_rows:
+        for outgoing in sorted(picked_rows):
+            for incoming in sorted(all_rows - picked_rows):
                 proposed_rows = (picked_rows - {outgoing}) | {incoming}
                 if not _is_legal_rows(proposed_rows, positions, salaries, teams, cfg):
                     continue
-                proposed = frozenset(ids[list(proposed_rows)].tolist())
+                proposed = frozenset(ids[sorted(proposed_rows)].tolist())
                 if proposed in queued:
                     continue
                 queued.add(proposed)
@@ -586,7 +587,10 @@ def generate_weighted_lineups(
     if not anchors:
         raise ValueError("slate has no feasible weighted-choice lineup")
     id_to_row = {player_id: row for row, player_id in enumerate(player_ids.tolist())}
-    anchor_rows = [{id_to_row[player_id] for player_id in anchor} for anchor in anchors]
+    anchor_rows = [
+        tuple(sorted(id_to_row[player_id] for player_id in anchor))
+        for anchor in anchors
+    ]
     rows_by_position = {
         pos: np.flatnonzero(positions == pos) for pos in pd.unique(positions)
     }
@@ -596,9 +600,10 @@ def generate_weighted_lineups(
         picked = set(anchor_rows[int(rng.integers(len(anchor_rows)))])
         for _ in range(random_walk_steps):
             for _ in range(proposals_per_step):
-                outgoing = int(rng.choice(list(picked)))
+                ordered_picked = sorted(picked)
+                outgoing = int(rng.choice(ordered_picked))
                 same_position = rows_by_position[positions[outgoing]]
-                available = same_position[~np.isin(same_position, list(picked))]
+                available = same_position[~np.isin(same_position, ordered_picked)]
                 if not len(available):
                     break
                 probabilities = (
@@ -609,7 +614,7 @@ def generate_weighted_lineups(
                 if _is_legal_rows(proposed, positions, salaries, teams, cfg):
                     picked = proposed
                     break
-        entries.append(frozenset(player_ids[list(picked)].tolist()))
+        entries.append(frozenset(player_ids[sorted(picked)].tolist()))
     return entries
 
 
