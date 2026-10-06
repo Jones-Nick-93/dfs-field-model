@@ -4,6 +4,9 @@ A research-oriented Python package for modeling a contest field as a
 distribution over complete lineups—not merely a vector of player ownership
 percentages.
 
+The repository includes a working Streamlit dashboard with a zero-setup
+synthetic demo and validated CSV upload paths.
+
 The project focuses on a practical modeling gap: two fields can have nearly
 identical marginal ownership while producing very different duplication,
 stacking, and payout dynamics. The package provides validated lineup
@@ -26,6 +29,7 @@ proprietary projection data are included.
 - Constrained mixture-weight fitting with rank and conditioning checks
 - Menu-coverage-first calibration for shared-consensus behavior
 - Tested command-line report generation
+- Interactive field overview, ownership, pair-structure, and lineup-inspector views
 
 ## Why lineup-level modeling?
 
@@ -59,6 +63,7 @@ On Windows:
 .\dev.cmd setup
 .\dev.cmd doctor
 .\dev.cmd check
+.\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
 On macOS or Linux:
@@ -67,9 +72,29 @@ On macOS or Linux:
 sh scripts/dev.sh setup
 sh scripts/dev.sh doctor
 sh scripts/dev.sh check
+./.venv/bin/python -m streamlit run app.py
 ```
 
 The full check runs diff hygiene, Ruff, pytest, and the deterministic demo. It also writes an ignored machine-readable receipt to `.artifacts/verification/latest.json` for local tooling and operational dashboards. Dependencies are resolved from the committed `uv.lock`.
+
+The dashboard opens in **Synthetic demo** mode, so no downloads, credentials,
+or private contest data are required. Switch to **Upload CSVs** to analyze a
+validated wide, long, or DraftKings-style export.
+
+## Dashboard
+
+The interface provides:
+
+- an executive field summary with exact duplication and concentration;
+- observed-versus-null salary and lineup-structure comparisons;
+- player ownership with realized baseline error;
+- player-pair excess co-ownership and lift;
+- stack and roster-shape distributions; and
+- an entry-level lineup inspector.
+
+Every page distinguishes measured facts from behavioral hypotheses. The UI
+does not claim to identify user skill, explain causality, forecast outcomes, or
+estimate production expected value.
 
 ## Analyze a contest export
 
@@ -123,8 +148,10 @@ field_model/
   diagnostics.py   Observed-field reports and baseline comparisons
   baselines.py     Ownership-weighted legal null model
   calibration.py   Mixture and menu-choice calibration
+  dashboard.py     Framework-independent presentation transforms
 tests/              Unit and end-to-end CLI tests
 docs/               Architecture, ingestion, and research roadmap
+app.py              Interactive Streamlit dashboard
 analyze_field.py    Report-generation CLI
 demo_field.py       Reproducible synthetic walkthrough
 ```
@@ -135,6 +162,8 @@ This is an extensible research package, not a wagering product. The most
 important next milestone is chronological validation on legally obtained,
 lineup-level contest exports. See the [research roadmap](docs/modeling_roadmap.md)
 and [architecture notes](docs/architecture.md).
+Dashboard behavior and privacy boundaries are documented in
+[dashboard usage](docs/dashboard.md).
 
 ## Public-release boundaries
 

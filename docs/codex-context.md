@@ -18,7 +18,7 @@ synthetic or private contest input
     -> canonical contest representation
     -> field/null-model diagnostics
     -> calibration summaries
-    -> JSON/CSV report or reproducible demo
+    -> JSON/CSV report, reproducible demo, or Streamlit dashboard
 ```
 
 Private inputs may be used locally but must never be committed or included in public outputs.
@@ -31,6 +31,9 @@ Private inputs may be used locally but must never be committed or included in pu
 | `tests/` | Deterministic tests using synthetic data | Yes |
 | `analyze_field.py` | Validated report CLI | Yes |
 | `demo_field.py` | Reproducible synthetic walkthrough | Yes |
+| `app.py` | Streamlit dashboard with synthetic default mode | Yes |
+| `field_model/dashboard.py` | Framework-independent presentation transforms | Yes |
+| `field_model/demo_data/` | Deterministic synthetic dashboard fixture | Yes |
 | `docs/publication-scope.md` | Publication boundary | Yes |
 | `data/private/` | Optional local private inputs | No; Git-ignored |
 | `outputs/` | Generated local artifacts | Review before sharing; Git-ignored |
@@ -53,6 +56,7 @@ Private inputs may be used locally but must never be committed or included in pu
 | Lint | `.\dev.cmd lint` | Windows, 2026-08-15 |
 | Full check | `.\dev.cmd check` | Windows, 2026-08-15; receipt passed |
 | Demo | `.\dev.cmd demo` | Windows, 2026-08-15 |
+| Dashboard | `.\.venv\Scripts\python.exe -m streamlit run app.py` | Windows, 2026-10-05 |
 
 GitHub CI runs Python 3.11 and 3.12 with Ruff and pytest.
 
@@ -67,3 +71,8 @@ Public-safe material includes reusable modeling infrastructure, deterministic sy
 - No chronological held-out validation on legally obtained contest exports is published.
 - No sport-specific correlated outcome model or production expected-value layer exists.
 - The Linux/macOS wrapper exists but has not yet been verified on Linux; CI remains the verified Linux path.
+
+## Dashboard data policy
+
+Tracked dashboard examples are synthetic. User uploads remain in process memory
+and are not written by the application. Public screenshots must use demo mode.

@@ -16,6 +16,8 @@ This file adds repository-specific requirements to the global Codex working agre
 - Lint: `.\dev.cmd lint`
 - Full verification: `.\dev.cmd check`
 - Demo: `.\dev.cmd demo`
+- Dashboard: `.\.venv\Scripts\python.exe -m streamlit run app.py`
+- Regenerate dashboard fixture: `.\.venv\Scripts\python.exe scripts\build_demo_fixture.py`
 - Linux/macOS equivalents: `sh scripts/dev.sh <doctor|setup|test|lint|check|demo>`.
 - A full check writes an ignored, non-secret receipt to `.artifacts/verification/latest.json`.
 
@@ -24,6 +26,8 @@ This file adds repository-specific requirements to the global Codex working agre
 - Keep stable player IDs independent of DataFrame row indices.
 - Validate every imported lineup before calculating diagnostics.
 - Report null-model marginal error and mixture identification diagnostics; never present illustrative generator defaults as fitted evidence.
+- Keep Streamlit presentation logic separate from framework-independent analytical calculations.
+- Public screenshots and dashboard demos must use the tracked synthetic fixture.
 - Do not add real contest exports, account identifiers, private lineups, paid projections, vendor payloads, validated production parameters, selection rules, staking logic, credentials, endpoints, or infrastructure details.
 
 ## Scope and approval gates
