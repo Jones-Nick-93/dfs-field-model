@@ -3,6 +3,7 @@ __pycache__/
 .ruff_cache/
 *.py[cod]
 .venv/
+.venv-ui/
 .tmp/
 .artifacts/
 build/

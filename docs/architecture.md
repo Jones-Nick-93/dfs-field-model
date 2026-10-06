@@ -16,6 +16,8 @@ canonical contest field <---- wide / long / provider-style adapters
           |
           +---- calibration
                   mixture weights, menu coverage, choice parameters
+          |
+          +---- dashboard transforms ----> Streamlit presentation
 ```
 
 ## Module boundaries
@@ -50,6 +52,13 @@ part of every comparison.
 Contains deliberately limited fitting tools. Mixture weights are constrained to
 the simplex and accompanied by rank diagnostics. Shared-menu fitting measures
 exact menu coverage before tuning the conditional choice process.
+
+### `dashboard.py` and `app.py`
+
+`dashboard.py` turns analytical reports into display-ready tables without
+importing Streamlit. `app.py` owns widgets, caching, charts, layout, and upload
+orchestration. This boundary keeps calculations testable without a browser and
+prevents UI code from becoming a second analytical implementation.
 
 ## Important invariants
 

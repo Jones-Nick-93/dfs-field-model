@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dfs-field-model"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lineup-level field modeling, diagnostics, and calibration for DFS contests"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,9 +25,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+app = [
+  "streamlit>=1.42,<1.51",
+]
 dev = [
   "pytest>=8.3",
   "ruff>=0.9",
+  "streamlit>=1.42,<1.51",
 ]
 
 [project.scripts]
@@ -36,7 +40,10 @@ dfs-field-demo = "demo_field:main"
 
 [tool.setuptools]
 packages = ["field_model"]
-py-modules = ["analyze_field", "demo_field"]
+py-modules = ["analyze_field", "app", "demo_field"]
+
+[tool.setuptools.package-data]
+field_model = ["demo_data/*.csv"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
