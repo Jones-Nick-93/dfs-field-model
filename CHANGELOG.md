@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - 2026-10-06
+
+- Added an exact-marginal controlled comparison with a threefold HHI gap.
+- Added sample CSV downloads and deterministic aggregate report ZIPs.
+- Added cached synthetic analysis, responsive metric rows, and grouped charts.
+- Added one-command app launch and a five-minute interview walkthrough.
+- Added report, controlled-calculation, and UI navigation verification.
+
 ## 0.2.0 - 2026-10-05
 
 - Added a zero-setup Streamlit dashboard with synthetic demo mode.

@@ -19,3 +19,4 @@ outputs/
 data/private/
 *.bundle
 *.zip
+.codex/runtime/task-state.md

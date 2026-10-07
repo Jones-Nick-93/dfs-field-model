@@ -1,5 +1,16 @@
 # DFS Field Model
 
+![DFS Field Lab controlled comparison](docs/assets/dashboard.jpg)
+
+**Same player ownership, different joint exposure.** Start with a four-player
+case where every player has exactly 50% ownership, but lineup concentration
+differs by a factor of three. Then explore legal eight-player lineups, an
+ownership null, and CSV ingestion.
+
+[Download the latest release](https://github.com/Jones-Nick-93/dfs-field-model/releases/latest)
+· [Five-minute interview walkthrough](docs/interview-guide.md)
+· [CI results](https://github.com/Jones-Nick-93/dfs-field-model/actions)
+
 A research-oriented Python package for modeling a contest field as a
 distribution over complete lineups—not merely a vector of player ownership
 percentages.
@@ -55,31 +66,34 @@ contest-selection, ownership-projection, lineup-selection, or staking process.
 
 ## Quick start
 
-Python 3.11 or newer is recommended.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first.
+The setup commands create Python 3.12's environment from `uv.lock`.
+Download and extract the release ZIP (or clone this repository), then open
+a terminal in the folder containing `dev.cmd`.
 
 On Windows:
 
 ```powershell
 .\dev.cmd setup
-.\dev.cmd doctor
-.\dev.cmd check
-.\.venv\Scripts\python.exe -m streamlit run app.py
+.\dev.cmd app
 ```
 
 On macOS or Linux:
 
 ```bash
 sh scripts/dev.sh setup
-sh scripts/dev.sh doctor
-sh scripts/dev.sh check
-./.venv/bin/python -m streamlit run app.py
+sh scripts/dev.sh app
 ```
 
-The full check runs diff hygiene, Ruff, pytest, and the deterministic demo. It also writes an ignored machine-readable receipt to `.artifacts/verification/latest.json` for local tooling and operational dashboards. Dependencies are resolved from the committed `uv.lock`.
+Run `.\dev.cmd check` (Windows) or `sh scripts/dev.sh check` (Linux/macOS)
+to verify diff hygiene, Ruff, pytest, and the deterministic demo. A check writes
+an ignored receipt to `.artifacts/verification/latest.json`. Git checks are
+skipped for release ZIPs, which have no Git metadata; code checks still run.
 
-The dashboard opens in **Synthetic demo** mode, so no downloads, credentials,
-or private contest data are required. Switch to **Upload CSVs** to analyze a
-validated wide, long, or DraftKings-style export.
+The dashboard opens in **Start here: same ownership**. No API credentials or
+contest data are needed. Choose **Synthetic demo** for the richer roster example,
+or **Upload CSVs** for your own input. Download the sample pool and wide contest
+CSVs in the sidebar to exercise upload mode with public-safe data.
 
 ## Dashboard
 
@@ -91,6 +105,10 @@ The interface provides:
 - player-pair excess co-ownership and lift;
 - stack and roster-shape distributions; and
 - an entry-level lineup inspector.
+
+Download an analysis ZIP with metrics, roster rules, assumptions, baseline error,
+and aggregate CSV tables. Reports omit account metadata and entry rosters;
+player labels and aggregates should still be reviewed before sharing.
 
 Every page distinguishes measured facts from behavioral hypotheses. The UI
 does not claim to identify user skill, explain causality, forecast outcomes, or

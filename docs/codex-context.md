@@ -1,6 +1,6 @@
 # Codex project context
 
-Last reviewed: 2026-08-15
+Last reviewed: 2026-10-06
 Repository class: public and sanitized
 Runtime: local research package and GitHub CI
 
@@ -52,13 +52,13 @@ Private inputs may be used locally but must never be committed or included in pu
 |---|---|---|
 | Doctor | `.\dev.cmd doctor` | Windows, 2026-08-15 |
 | Setup | `.\dev.cmd setup` | Windows, 2026-08-15; locked sync |
-| Test | `.\dev.cmd test` | Windows, 2026-08-15; 19 passed |
+| Test | `.\dev.cmd test` | Windows, 2026-10-06; 29 passed in full check |
 | Lint | `.\dev.cmd lint` | Windows, 2026-08-15 |
-| Full check | `.\dev.cmd check` | Windows, 2026-08-15; receipt passed |
+| Full check | `.\dev.cmd check` | Windows, 2026-10-06; lint, 29 tests, demo, and diff passed |
 | Demo | `.\dev.cmd demo` | Windows, 2026-08-15 |
-| Dashboard | `.\.venv\Scripts\python.exe -m streamlit run app.py` | Windows, 2026-10-05 |
+| Dashboard | `.\dev.cmd app` | Launches Streamlit; dashboard verified on Windows, 2026-10-06 |
 
-GitHub CI runs Python 3.11 and 3.12 with Ruff and pytest.
+GitHub CI runs Python 3.11 and 3.12 with Ruff and pytest, plus built-wheel installation and dashboard smoke checks away from the source checkout.
 
 A full local check writes a non-secret machine-readable receipt to `.artifacts/verification/latest.json`; the file is ignored by Git and can feed local tooling or future operational dashboards.
 

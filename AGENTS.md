@@ -16,9 +16,9 @@ This file adds repository-specific requirements to the global Codex working agre
 - Lint: `.\dev.cmd lint`
 - Full verification: `.\dev.cmd check`
 - Demo: `.\dev.cmd demo`
-- Dashboard: `.\.venv\Scripts\python.exe -m streamlit run app.py`
+- Dashboard: `.\dev.cmd app`
 - Regenerate dashboard fixture: `.\.venv\Scripts\python.exe scripts\build_demo_fixture.py`
-- Linux/macOS equivalents: `sh scripts/dev.sh <doctor|setup|test|lint|check|demo>`.
+- Linux/macOS equivalents: `sh scripts/dev.sh <doctor|setup|test|lint|check|demo|app>`.
 - A full check writes an ignored, non-secret receipt to `.artifacts/verification/latest.json`.
 
 ## Non-negotiable invariants
