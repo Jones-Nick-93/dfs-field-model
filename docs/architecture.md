@@ -60,6 +60,13 @@ importing Streamlit. `app.py` owns widgets, caching, charts, layout, and upload
 orchestration. This boundary keeps calculations testable without a browser and
 prevents UI code from becoming a second analytical implementation.
 
+### `interview.py`
+
+Builds the exact-marginal controlled case with the same legality and diagnostic
+functions used for larger fields. Exports deterministic aggregate report ZIPs
+and sample wide CSVs. Account metadata and individual entry rosters are excluded
+from reports, while aggregate player labels remain explicit.
+
 ## Important invariants
 
 - `player_id` is unique and nonempty.

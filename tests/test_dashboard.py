@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import json
+from io import BytesIO
+from zipfile import ZipFile
+
 import pytest
 
+from field_model import contest_from_wide
 from field_model.dashboard import (
     build_demo_analysis,
     comparison_cards,
@@ -11,6 +16,7 @@ from field_model.dashboard import (
     pair_signal_table,
     salary_distribution,
 )
+from field_model.interview import report_bundle, wide_entries
 
 
 @pytest.fixture(scope="module")
@@ -53,3 +59,15 @@ def test_lineup_detail_matches_entry_metrics(demo_analysis) -> None:
 def test_lineup_detail_rejects_unknown_entry(demo_analysis) -> None:
     with pytest.raises(ValueError, match="unknown entry_id"):
         lineup_detail(demo_analysis, "not-a-real-entry")
+
+
+def test_demo_samples_reload_and_report_preserves_baseline_error(demo_analysis):
+    imported = contest_from_wide(wide_entries(demo_analysis))
+    imported.validate_against_pool(demo_analysis.pool, demo_analysis.config)
+    assert imported.lineups == demo_analysis.field.lineups
+    with ZipFile(
+        BytesIO(report_bundle(demo_analysis, source="Synthetic demo"))
+    ) as archive:
+        report = json.loads(archive.read("analysis.json"))
+        assert report["baseline_error"] == demo_analysis.comparison.summary
+        assert report["input_summary"]["entries"] == 50

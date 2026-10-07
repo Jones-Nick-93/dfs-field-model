@@ -13,7 +13,9 @@ sh scripts/dev.sh setup
 sh scripts/dev.sh check
 ```
 
-On Windows, use `.\dev.cmd setup` and `.\dev.cmd check`. The full check runs 19 deterministic tests and produces an ignored verification receipt in addition to terminal evidence.
+On Windows, use `.\dev.cmd setup`, `.\dev.cmd app`, and `.\dev.cmd check`.
+The full check runs the current test suite and writes an ignored receipt.
+See the [interview walkthrough](interview-guide.md) for the guided five-minute demo.
 
 The demo constructs a deterministic synthetic slate, generates two neutral
 field hypotheses, compares lineup concentration, and evaluates an
@@ -30,9 +32,15 @@ ownership-weighted legal null. No private data or network access is required.
 
 ## Resume-ready evidence
 
+Use these as drafts only after you can explain and reproduce the work. The
+project used AI coding assistance; describe your actual contributions accurately.
+
 - Built a tested Python package that validates complete DFS lineups, generates
   constraint-safe synthetic fields with SciPy/HiGHS MILP, and measures
   duplication, concentration, overlap, stacks, and co-ownership.
 - Designed calibration diagnostics that report menu coverage, marginal error,
   matrix rank, and conditioning so weakly identified models are not presented
   as validated behavior.
+- Delivered a reproducible Streamlit case study demonstrating identical player
+  marginals with a threefold difference in lineup concentration, with portable
+  report downloads and tested CSV adapters.

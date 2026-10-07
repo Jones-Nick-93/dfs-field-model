@@ -7,7 +7,11 @@ python -m pip install -e ".[app]"
 streamlit run app.py
 ```
 
-Demo mode is the default. It generates two explicit synthetic lineup processes,
+The controlled comparison is the default: 12 entries in each of two fields,
+four players at exactly 50% ownership, and HHI 0.500 versus 0.167. It uses two
+slots and identical salaries to isolate joint selection.
+
+Synthetic demo mode uses two explicit synthetic lineup processes,
 combines them into a field, and compares that field with a legal
 ownership-weighted null model. The deterministic generated result is tracked as
 a small fixture so the browser never runs the optimizer during initial load.
@@ -19,6 +23,11 @@ python scripts/build_demo_fixture.py
 ```
 
 ## Views
+
+### Start here: same ownership
+
+Exact matching marginals, side-by-side lineup frequencies, and an expandable
+HHI calculation. Follow the [interview guide](interview-guide.md) to present it.
 
 ### Overview
 
@@ -46,6 +55,11 @@ projection sum for one complete entry.
 States what is directly measured and what the current project cannot establish.
 
 ## Upload privacy
+
+Sample CSV downloads use the synthetic eight-slot fixture and default upload
+rules. Analysis ZIPs contain JSON configuration/metrics and aggregate tables.
+They omit account metadata, original upload filenames, and individual rosters.
+They retain player labels; review any uploaded analysis before sharing.
 
 Uploaded files are read into the active Streamlit process and are not written by
 the dashboard. That is an application behavior, not a guarantee about an

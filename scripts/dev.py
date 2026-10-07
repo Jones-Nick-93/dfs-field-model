@@ -17,6 +17,8 @@ ARTIFACT = REPO_ROOT / ".artifacts" / "verification" / "latest.json"
 
 
 def capture(*command: str) -> str:
+    if command[0] == "git":
+        command = ("git", "-c", f"safe.directory={REPO_ROOT.as_posix()}", *command[1:])
     result = subprocess.run(
         command,
         cwd=REPO_ROOT,
@@ -29,9 +31,17 @@ def capture(*command: str) -> str:
 
 
 def git_metadata() -> dict[str, Any]:
+    if not (REPO_ROOT / ".git").exists():
+        return {
+            "repository": "dfs-field-model",
+            "branch": None,
+            "commit": None,
+            "dirty": None,
+            "changed_file_count": None,
+        }
     status = capture("git", "status", "--porcelain", "--untracked-files=all")
     return {
-        "repository": REPO_ROOT.name,
+        "repository": "dfs-field-model",
         "branch": capture("git", "branch", "--show-current"),
         "commit": capture("git", "rev-parse", "HEAD"),
         "dirty": bool(status and status != "unknown"),
@@ -41,7 +51,11 @@ def git_metadata() -> dict[str, Any]:
 
 def commands() -> dict[str, list[str]]:
     return {
-        "diff": ["git", "diff", "--check"],
+        "diff": (
+            ["git", "-c", f"safe.directory={REPO_ROOT.as_posix()}", "diff", "--check"]
+            if (REPO_ROOT / ".git").exists()
+            else [sys.executable, "-c", "print('Release ZIP: Git diff check skipped')"]
+        ),
         "lint": [sys.executable, "-m", "ruff", "check", "."],
         "test": [
             sys.executable,
@@ -52,6 +66,7 @@ def commands() -> dict[str, list[str]]:
             str(REPO_ROOT / ".tmp" / "pytest"),
         ],
         "demo": [sys.executable, "demo_field.py"],
+        "app": [sys.executable, "-m", "streamlit", "run", "app.py"],
     }
 
 
@@ -115,7 +130,7 @@ def check() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "command", choices=("doctor", "lint", "test", "demo", "check")
+        "command", choices=("doctor", "lint", "test", "demo", "check", "app")
     )
     parser.add_argument("--json", action="store_true", help="JSON output for doctor")
     args = parser.parse_args()

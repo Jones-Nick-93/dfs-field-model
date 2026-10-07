@@ -24,3 +24,41 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest -q
+
+  pytest:
+    name: pytest
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both Python test jobs to succeed
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        run: test "$TEST_RESULT" = success
+
+  package:
+    name: package/build validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build
+      - run: python -m build
+      - name: Install built wheel with app dependencies
+        run: python -c "import subprocess, sys; from pathlib import Path; subprocess.check_call([sys.executable, '-m', 'pip', 'install', str(next(Path('dist').glob('*.whl'))) + '[app]'])"
+      - name: Verify installed package away from source checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import app
+          from field_model.dashboard import build_demo_analysis
+          from field_model.interview import controlled_fields, report_bundle
+          from streamlit.testing.v1 import AppTest
+          assert build_demo_analysis().field.field_size == 150
+          assert report_bundle(controlled_fields()[0], source="Synthetic demo")
+          ui = AppTest.from_file(str(Path(app.__file__)), default_timeout=30).run()
+          assert not ui.exception
+          PY

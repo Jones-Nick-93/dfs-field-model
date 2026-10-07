@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from hashlib import sha256
 from io import BytesIO
 
+import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -25,6 +27,13 @@ from field_model.dashboard import (
     pair_signal_table,
     salary_distribution,
 )
+from field_model.interview import (
+    controlled_bundle,
+    controlled_fields,
+    controlled_summary,
+    report_bundle,
+    wide_entries,
+)
 
 st.set_page_config(
     page_title="DFS Field Lab",
@@ -37,9 +46,13 @@ st.set_page_config(
 def main() -> None:
     _inject_style()
     source = _sidebar_source()
+    if source == "Start here: same ownership":
+        _hero("Controlled synthetic example · exactly matching ownership")
+        _render_controlled()
+        return
     if source == "Synthetic demo":
         with st.spinner("Loading a legal synthetic field and ownership-only null…"):
-            analysis = build_demo_analysis()
+            analysis = _cached_demo()
         source_note = "Synthetic demo · no private or proprietary data"
     else:
         analysis = _upload_analysis()
@@ -49,6 +62,18 @@ def main() -> None:
             return
 
     _hero(source_note)
+    st.download_button(
+        "Download analysis report",
+        report_bundle(
+            analysis,
+            source="Synthetic demo" if source == "Synthetic demo" else "User upload",
+        ),
+        file_name="field-analysis.zip",
+        mime="application/zip",
+    )
+    st.caption(
+        "Report includes aggregate player labels and metrics. Review uploaded results before sharing."
+    )
     _render_summary(analysis)
     view = st.radio(
         "Analysis view",
@@ -72,15 +97,116 @@ def _sidebar_source() -> str:
     st.sidebar.markdown("### Field input")
     source = st.sidebar.radio(
         "Data source",
-        ["Synthetic demo", "Upload CSVs"],
+        ["Start here: same ownership", "Synthetic demo", "Upload CSVs"],
         help="Demo mode is deterministic and uses generated data only.",
     )
     st.sidebar.markdown("---")
+    with st.sidebar.expander("Download sample CSVs"):
+        demo = _cached_demo()
+        st.download_button(
+            "Player pool",
+            demo.pool.to_csv(index=False),
+            "sample-player-pool.csv",
+            "text/csv",
+        )
+        st.download_button(
+            "Contest entries (wide)",
+            wide_entries(demo).to_csv(index=False),
+            "sample-entries.csv",
+            "text/csv",
+        )
+        st.caption(
+            "Use Wide format and the default roster rules to reload these samples."
+        )
     st.sidebar.caption(
         "This project measures lineup structure. It does not predict outcomes, "
         "recommend wagers, or estimate production expected value."
     )
     return source
+
+
+@st.cache_data(show_spinner=False)
+def _cached_demo() -> DashboardAnalysis:
+    return build_demo_analysis()
+
+
+def _metric_grid(metrics: list[tuple[str, str, str]]) -> None:
+    for start in range(0, len(metrics), 2):
+        for column, (label, value, help_text) in zip(
+            st.columns(2), metrics[start : start + 2], strict=False
+        ):
+            column.metric(label, value, help=help_text)
+
+
+def _render_controlled() -> None:
+    st.subheader("Same ownership. Three times the concentration.")
+    st.write(
+        "Four players. Two slots per lineup. Twelve entries in each field. Every player appears in exactly half the entries."
+    )
+    st.dataframe(
+        controlled_summary().round({"Lineup HHI": 3, "Effective lineups": 1}),
+        hide_index=True,
+        width="stretch",
+    )
+    clustered, spread = controlled_fields()
+    constructions = pd.DataFrame(
+        [
+            {
+                "Lineup": "".join(sorted(lineup)),
+                "Entries": count,
+                "Field": analysis.field.contest_id,
+            }
+            for analysis in (clustered, spread)
+            for lineup, count in analysis.field.entries["lineup"].value_counts().items()
+        ]
+    )
+    _grouped_chart(constructions, "Lineup", "Entries", "Field")
+    st.info(
+        "Ownership cannot distinguish these fields: A, B, C, and D are all at 50%. Exact-lineup HHI is 0.500 versus 0.167; effective lineup counts are 2 versus 6."
+    )
+    st.markdown(
+        "**Why it matters:** selecting players together changes joint exposure. AB appears in 50% of the clustered field and only 16.7% of the spread field."
+    )
+    st.caption(
+        "This exact construction proves information loss in marginals. It is a teaching example, not a fitted description of real entrants."
+    )
+    with st.expander("How to calculate HHI"):
+        st.code(
+            "Clustered: (6/12)² + (6/12)² = 0.500\nSpread:    6 × (2/12)² = 0.167\nEffective lineups = 1 / HHI"
+        )
+    st.download_button(
+        "Download controlled case study",
+        controlled_bundle(),
+        "controlled-comparison.zip",
+        "application/zip",
+    )
+    st.write(
+        "Next: choose Synthetic demo in the sidebar to explore realistic roster constraints and an approximate ownership null."
+    )
+
+
+def _grouped_chart(
+    data: pd.DataFrame,
+    category: str,
+    value: str,
+    group: str,
+    *,
+    horizontal: bool = False,
+) -> None:
+    chart = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(
+            x=alt.X(f"{value}:Q" if horizontal else f"{category}:N"),
+            y=alt.Y(f"{category}:N" if horizontal else f"{value}:Q"),
+            color=alt.Color(
+                f"{group}:N", scale=alt.Scale(range=["#48c6a8", "#8797ff"])
+            ),
+            tooltip=[category, value, group],
+            **({"yOffset": f"{group}:N"} if horizontal else {"xOffset": f"{group}:N"}),
+        )
+    )
+    st.altair_chart(chart, use_container_width=True)
 
 
 def _upload_analysis() -> DashboardAnalysis | None:
@@ -94,16 +220,10 @@ def _upload_analysis() -> DashboardAnalysis | None:
 
     with st.sidebar.expander("Roster rules", expanded=False):
         roster_size = st.number_input("Roster size", min_value=1, value=8, step=1)
-        salary_cap = st.number_input(
-            "Salary cap", min_value=1, value=50_000, step=500
-        )
-        position_min_text = st.text_input(
-            "Position minimums", value="GK=1,D=2,M=2,F=2"
-        )
+        salary_cap = st.number_input("Salary cap", min_value=1, value=50_000, step=500)
+        position_min_text = st.text_input("Position minimums", value="GK=1,D=2,M=2,F=2")
         flex_text = st.text_input("Flex positions", value="D,M,F")
-        max_per_team = st.number_input(
-            "Maximum per team", min_value=1, value=4, step=1
-        )
+        max_per_team = st.number_input("Maximum per team", min_value=1, value=4, step=1)
 
     with st.sidebar.expander("Column mapping", expanded=False):
         entry_id_column = st.text_input("Entry ID column", value="entry_id")
@@ -133,8 +253,32 @@ def _upload_analysis() -> DashboardAnalysis | None:
 
     if pool_file is None or entries_file is None:
         return None
+    signature = sha256(
+        pool_file.getvalue()
+        + entries_file.getvalue()
+        + repr(
+            (
+                format_name,
+                include_null,
+                roster_size,
+                salary_cap,
+                position_min_text,
+                flex_text,
+                max_per_team,
+                entry_id_column,
+                account_column,
+                score_column,
+                player_columns_text,
+                player_id_column,
+                lineup_column,
+                roster_slots_text,
+            )
+        ).encode()
+    ).hexdigest()
     if not st.sidebar.button("Analyze field", type="primary", width="stretch"):
-        return st.session_state.get("uploaded_analysis")
+        if signature == st.session_state.get("uploaded_signature"):
+            return st.session_state.get("uploaded_analysis")
+        return None
 
     try:
         pool = pd.read_csv(BytesIO(pool_file.getvalue()))
@@ -183,6 +327,7 @@ def _upload_analysis() -> DashboardAnalysis | None:
                 pool, field, config, include_null=include_null, null_walk_steps=12
             )
         st.session_state["uploaded_analysis"] = analysis
+        st.session_state["uploaded_signature"] = signature
         return analysis
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
         st.sidebar.error(f"Could not analyze these files: {error}")
@@ -205,7 +350,6 @@ def _hero(source_note: str) -> None:
 
 def _render_summary(analysis: DashboardAnalysis) -> None:
     summary = analysis.observed.summary
-    columns = st.columns(5)
     metrics = [
         ("Entries", f"{int(summary['entries']):,}", "Complete lineups analyzed"),
         (
@@ -229,23 +373,20 @@ def _render_summary(analysis: DashboardAnalysis) -> None:
             "Inverse-HHI equivalent lineup count",
         ),
     ]
-    for column, (label, value, help_text) in zip(columns, metrics, strict=True):
-        column.metric(label, value, help=help_text)
+    _metric_grid(metrics)
 
 
 def _render_overview(analysis: DashboardAnalysis) -> None:
     st.subheader("Does ownership alone reproduce this field?")
     cards = comparison_cards(analysis)
     if cards:
-        columns = st.columns(len(cards))
-        for column, card in zip(columns, cards, strict=True):
-            column.metric(card["label"], card["value"], help=card["help"])
+        _metric_grid([(card["label"], card["value"], card["help"]) for card in cards])
         ratio = analysis.comparison.summary["lineup_hhi_ratio"]
         if np.isfinite(ratio) and ratio < 0.75:
             st.info(
-                "The legal ownership-only null is substantially less concentrated "
-                "than the observed field. Marginal ownership is not reproducing the "
-                "same exact-lineup structure in this sample."
+                "The ownership null is less concentrated, but it also misses player ownership. "
+                "This gap combines marginal mismatch and joint structure; it does not isolate dependence. "
+                "Use the controlled example to see an exact ownership match."
             )
         else:
             st.info(
@@ -258,13 +399,27 @@ def _render_overview(analysis: DashboardAnalysis) -> None:
     left, right = st.columns(2)
     with left:
         st.markdown("#### Exact duplication")
-        duplication = duplication_comparison(analysis).set_index("exact_dup_count")
-        st.bar_chart(duplication, color=["#48c6a8", "#8797ff"])
+        duplication = duplication_comparison(analysis).rename(
+            columns={
+                "observed_pct": "Observed field",
+                "null_pct": "Ownership null",
+                "exact_dup_count": "Copies of lineup",
+            }
+        )
+        chart_data = duplication.melt(
+            id_vars="Copies of lineup", var_name="Field", value_name="Entries (%)"
+        )
+        _grouped_chart(chart_data, "Copies of lineup", "Entries (%)", "Field")
         st.caption("Share of entries at each exact lineup-duplication count.")
     with right:
         st.markdown("#### Salary remaining")
         histogram = _salary_histogram(salary_distribution(analysis))
-        st.area_chart(histogram, color=["#48c6a8", "#8797ff"])
+        st.line_chart(
+            histogram.rename(
+                columns={"observed": "Observed field", "null": "Ownership null"}
+            ),
+            color=["#48c6a8", "#8797ff"],
+        )
         st.caption("Observed construction versus the legal ownership-only null.")
 
     if analysis.segment_summary is not None:
@@ -294,8 +449,20 @@ def _render_ownership(analysis: DashboardAnalysis) -> None:
     chart_columns = ["ownership_pct"]
     if "null_ownership_pct" in table:
         chart_columns.append("null_ownership_pct")
-    chart = table.head(20).set_index("player")[chart_columns]
-    st.bar_chart(chart, horizontal=True, color=["#48c6a8", "#8797ff"])
+    chart = table.head(20)[["player", *chart_columns]].rename(
+        columns={
+            "player": "Player",
+            "ownership_pct": "Observed field",
+            "null_ownership_pct": "Ownership null",
+        }
+    )
+    _grouped_chart(
+        chart.melt(id_vars="Player", var_name="Field", value_name="Ownership (%)"),
+        "Player",
+        "Ownership (%)",
+        "Field",
+        horizontal=True,
+    )
     st.caption(
         "The null uses observed ownership as proposal weights, but its realized "
         "marginals are reported rather than assumed to match."
@@ -353,7 +520,6 @@ def _render_inspector(analysis: DashboardAnalysis) -> None:
     entry_ids = analysis.observed.entries["entry_id"].astype(str).tolist()
     selected = st.selectbox("Entry ID", entry_ids)
     roster, diagnostics = lineup_detail(analysis, selected)
-    columns = st.columns(5)
     values = [
         ("Salary used", f"${diagnostics['salary_used']:,}"),
         ("Salary remaining", f"${diagnostics['salary_remaining']:,}"),
@@ -361,8 +527,7 @@ def _render_inspector(analysis: DashboardAnalysis) -> None:
         ("Largest team stack", str(diagnostics["max_team_stack"])),
         ("Consensus total", f"{diagnostics['consensus_total']:.1f}"),
     ]
-    for column, (label, value) in zip(columns, values, strict=True):
-        column.metric(label, value)
+    _metric_grid([(label, value, "Entry diagnostic") for label, value in values])
     st.dataframe(roster, hide_index=True, width="stretch")
     st.caption(
         "Consensus total is a synthetic/demo or uploaded projection sum—not a "
@@ -409,7 +574,9 @@ def _render_method(analysis: DashboardAnalysis) -> None:
 
 def _render_upload_welcome() -> None:
     _hero("Upload mode · files stay in this app session")
-    st.info("Upload both CSV files in the sidebar, configure their columns, then analyze.")
+    st.info(
+        "Upload both CSV files in the sidebar, configure their columns, then analyze."
+    )
     st.markdown(
         """
         ### Required player-pool columns
@@ -479,6 +646,13 @@ def _inject_style() -> None:
             padding: 1rem;
         }
         [data-testid="stMetricValue"] { color: #f6f8ff; }
+        [data-testid="stMetricValue"] > div { white-space: normal; overflow: visible; }
+        @media (max-width: 760px) {
+            [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+            [data-testid="stColumn"] { min-width: 220px; flex: 1 1 220px; }
+            .hero { padding: 1.2rem; }
+            .hero h1 { font-size: 2.2rem; }
+        }
         </style>
         """,
         unsafe_allow_html=True,
